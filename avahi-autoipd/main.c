@@ -1404,8 +1404,11 @@ static int loop(int iface, uint32_t addr) {
 
 fail:
 
-    if (state == STATE_RUNNING || state == STATE_ANNOUNCING)
+    if (state == STATE_RUNNING || state == STATE_ANNOUNCING) {
         do_callout(dispatcher, CALLOUT_STOP, iface, addr);
+        /* Don't leave yet, allow dispatcher to process event */
+        sleep(2);
+    }
 
     avahi_free(out_packet);
     avahi_free(in_packet);
