@@ -237,12 +237,13 @@ static int helper_main(int fd) {
             case AVAHI_CHROOT_GET_RECORD_BROWSER_INTROSPECT:
 #endif
             case AVAHI_CHROOT_GET_RESOLV_CONF: {
+                const char *fn = get_file_name_table[(int) command];
                 int payload;
 
-                if ((payload = open(get_file_name_table[(int) command], O_RDONLY)) < 0) {
+                if ((payload = open(fn, O_RDONLY)) < 0) {
                     uint8_t c = AVAHI_CHROOT_FAILURE;
 
-                    avahi_log_error(__FILE__": open() failed: %s", strerror(errno));
+                    avahi_log_error(__FILE__": open(%s) failed: %s", fn, strerror(errno));
 
                     if (write(fd, &c, sizeof(c)) != sizeof(c)) {
                         avahi_log_error(__FILE__": write() failed: %s\n", strerror(errno));
@@ -262,9 +263,11 @@ static int helper_main(int fd) {
 
             case AVAHI_CHROOT_UNLINK_SOCKET:
             case AVAHI_CHROOT_UNLINK_PID: {
+                const char *fn = unlink_file_name_table[(int) command];
                 uint8_t c = AVAHI_CHROOT_SUCCESS;
 
-                unlink(unlink_file_name_table[(int) command]);
+                if (unlink(fn) && errno != ENOENT)
+                    avahi_log_error(__FILE__": unlink(%s) failed: %s", fn, strerror(errno));
 
                 if (write(fd, &c, sizeof(c)) != sizeof(c)) {
                     avahi_log_error(__FILE__": write() failed: %s\n", strerror(errno));
